@@ -1,5 +1,7 @@
 # FlowHR — HR Workflow Designer
 
+**Author:** Umesh Chandra — [github.com/Umeshchandra2024](https://github.com/Umeshchandra2024)
+
 A visual workflow designer for HR operations: an HR admin drags process steps onto a canvas,
 wires them together, configures each step through dynamic forms, and test-runs the whole
 workflow in a simulation sandbox that plays the execution back live on the canvas.
