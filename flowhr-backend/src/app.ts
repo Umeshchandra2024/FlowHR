@@ -14,6 +14,7 @@ export function createApp() {
   app.use(cors({ origin: corsOrigins, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
 
+  app.get('/', (_req, res) => res.json({ message: 'FlowHR API is running', status: 'ok' }));
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
   app.use('/api', routes);
