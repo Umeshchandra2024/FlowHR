@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AutomationAction, SimulationResult, WorkflowJSON } from '../core/types'
-import { api } from './client'
+import { api, ApiError } from './client'
 
 // Module-level cache: the automation catalog is static per session, so selecting
 // different nodes must not refetch it. The hook API mirrors react-query's shape
@@ -40,6 +40,15 @@ export function useAutomations(): AutomationsQuery {
   return { data, isLoading, error, retry: () => void load() }
 }
 
+type WorkflowRecord = { id: string }
+
+// Kept in module scope, not component state: repeated "Run" clicks within the same tab
+// session should update and re-run the *same* backend Workflow row (so its run history
+// accumulates and is visible via GET /workflows/:id/runs), rather than creating a fresh
+// row per click. A page reload starts a new one — this frontend has no "open an existing
+// saved workflow" UI yet, so there is nothing to resume across reloads either way.
+let currentWorkflowId: string | null = null
+
 export type SimulateMutation = {
   run: (workflow: WorkflowJSON) => Promise<SimulationResult | null>
   result: SimulationResult | null
@@ -57,11 +66,31 @@ export function useSimulate(): SimulateMutation {
     setIsRunning(true)
     setError(null)
     try {
-      const simulation = await api.post<SimulationResult>('/simulate', workflow)
+      if (currentWorkflowId) {
+        try {
+          await api.put<WorkflowRecord>(`/workflows/${currentWorkflowId}`, {
+            name: workflow.name,
+            definition: workflow,
+          })
+        } catch (err) {
+          if (!(err instanceof ApiError) || err.status !== 404) throw err
+          currentWorkflowId = null // the tracked workflow no longer exists server-side; start a new one
+        }
+      }
+
+      if (!currentWorkflowId) {
+        const created = await api.post<WorkflowRecord>('/workflows', {
+          name: workflow.name,
+          definition: workflow,
+        })
+        currentWorkflowId = created.id
+      }
+
+      const simulation = await api.post<SimulationResult>(`/workflows/${currentWorkflowId}/run`)
       setResult(simulation)
       return simulation
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Simulation failed')
+      setError(err instanceof Error ? err.message : 'Run failed')
       return null
     } finally {
       setIsRunning(false)

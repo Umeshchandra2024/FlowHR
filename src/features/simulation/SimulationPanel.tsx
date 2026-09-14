@@ -165,7 +165,7 @@ export function SimulationPanel() {
                   )}
                 >
                   Run {result.status} — {result.totalSteps} steps in{' '}
-                  {(result.totalDurationMs / 1000).toFixed(1)}s (simulated)
+                  {(result.totalDurationMs / 1000).toFixed(1)}s
                 </p>
               </div>
             )}

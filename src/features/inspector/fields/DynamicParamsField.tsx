@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { useAutomations } from '../../../api/hooks'
 import type { FieldSpec } from '../../../core/registry/formSchemas'
 import { FieldShell, INPUT_CLASS } from './FieldShell'
@@ -49,18 +50,32 @@ export function DynamicParamsField({ field, actionId, value, onChange }: Props) 
   return (
     <FieldShell label={field.label} helpText={field.helpText}>
       <div className="space-y-2">
-        {action.params.map((param) => (
-          <div key={param} className="flex items-center gap-2">
-            <span className="w-20 shrink-0 truncate font-mono text-xs text-slate-500">{param}</span>
-            <input
-              value={value[param] ?? ''}
-              placeholder={`Value for ${param}`}
-              aria-label={`${action.label} parameter ${param}`}
-              onChange={(e) => onChange({ ...value, [param]: e.target.value })}
-              className={INPUT_CLASS}
-            />
-          </div>
-        ))}
+        {action.params.map((param) =>
+          param === 'message' ? (
+            <div key={param} className="space-y-1">
+              <span className="block font-mono text-xs text-slate-500">{param}</span>
+              <textarea
+                value={value[param] ?? ''}
+                placeholder={`Value for ${param}`}
+                aria-label={`${action.label} parameter ${param}`}
+                onChange={(e) => onChange({ ...value, [param]: e.target.value })}
+                rows={5}
+                className={clsx(INPUT_CLASS, 'resize-y font-mono')}
+              />
+            </div>
+          ) : (
+            <div key={param} className="flex items-center gap-2">
+              <span className="w-20 shrink-0 truncate font-mono text-xs text-slate-500">{param}</span>
+              <input
+                value={value[param] ?? ''}
+                placeholder={`Value for ${param}`}
+                aria-label={`${action.label} parameter ${param}`}
+                onChange={(e) => onChange({ ...value, [param]: e.target.value })}
+                className={INPUT_CLASS}
+              />
+            </div>
+          ),
+        )}
       </div>
     </FieldShell>
   )
