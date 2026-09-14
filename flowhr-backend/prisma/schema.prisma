@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workflow {
+  id         String        @id @default(uuid())
+  name       String
+  // The full WorkflowJSON graph ({ version, name, nodes, edges }). See README "Architecture
+  // decisions" for why this is JSONB rather than normalized node/edge tables.
+  definition Json
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  runs       WorkflowRun[]
+
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id          String    @id @default(uuid())
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status      String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  // SimulationResult: the full step-by-step execution log, for audit/history.
+  resultLog   Json
+
+  @@index([workflowId, startedAt])
+  @@map("workflow_runs")
+}

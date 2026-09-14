@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flowhr
+      POSTGRES_PASSWORD: flowhr
+      POSTGRES_DB: flowhr
+    ports:
+      - '5432:5432'
+    volumes:
+      - flowhr_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U flowhr']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://flowhr:flowhr@db:5432/flowhr?schema=public
+      JWT_SECRET: local-dev-secret-change-me-please
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:5173
+      RESEND_API_KEY: ''
+      EMAIL_FROM: 'FlowHR <onboarding@resend.dev>'
+      EMAIL_SENDING_ENABLED: 'false'
+      RUN_RATE_LIMIT_MAX: 10
+      AUTH_RATE_LIMIT_MAX: 20
+    ports:
+      - '4000:4000'
+
+volumes:
+  flowhr_pg_data:
